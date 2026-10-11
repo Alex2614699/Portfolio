@@ -44,3 +44,45 @@ function closeLightbox() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeLightbox();
 });
+
+// Gallery auto-loader: checks assets/example.png, then example1.png, example2.png, ...
+// and stops at the first missing number (capped at MAX_IMAGES as a safety limit).
+const GALLERY_MAX_IMAGES = 30;
+const GALLERY_PATH = 'assets/example';
+const GALLERY_EXT = '.png';
+
+function checkImageExists(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
+
+async function buildGallery() {
+  const grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+
+  const found = [];
+
+  // First image has no number: example.png
+  const firstSrc = `${GALLERY_PATH}${GALLERY_EXT}`;
+  if (await checkImageExists(firstSrc)) found.push(firstSrc);
+
+  // Remaining images: example1.png, example2.png, ...
+  for (let i = 1; i <= GALLERY_MAX_IMAGES; i++) {
+    const src = `${GALLERY_PATH}${i}${GALLERY_EXT}`;
+    const exists = await checkImageExists(src);
+    if (!exists) break; // stop at first gap in the numbering
+    found.push(src);
+  }
+
+  grid.innerHTML = found.map(src => `
+    <div class="gallery-card">
+      <div class="gallery-image" style="background-image: url('${src}');" onclick="openLightbox('${src}')"></div>
+    </div>
+  `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', buildGallery);

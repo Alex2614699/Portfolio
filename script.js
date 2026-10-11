@@ -46,7 +46,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 // Gallery auto-loader: checks assets/example.png, then example1.png, example2.png, ...
-// with a forgiving check that scans up to GALLERY_MAX_IMAGES without breaking on gaps.
+// and stops at the first missing number (capped at MAX_IMAGES as a safety limit).
 const GALLERY_MAX_IMAGES = 30;
 const GALLERY_PATH = 'assets/example';
 const GALLERY_EXT = '.png';
@@ -68,16 +68,14 @@ async function buildGallery() {
 
   // First image has no number: example.png
   const firstSrc = `${GALLERY_PATH}${GALLERY_EXT}`;
-  if (await checkImageExists(firstSrc)) {
-    found.push(firstSrc);
-  }
+  if (await checkImageExists(firstSrc)) found.push(firstSrc);
 
-  // Remaining images: example1.png, example2.png, ... up to GALLERY_MAX_IMAGES
+  // Remaining images: example1.png, example2.png, ...
   for (let i = 1; i <= GALLERY_MAX_IMAGES; i++) {
     const src = `${GALLERY_PATH}${i}${GALLERY_EXT}`;
-    if (await checkImageExists(src)) {
-      found.push(src);
-    }
+    const exists = await checkImageExists(src);
+    if (!exists) break; // stop at first gap in the numbering
+    found.push(src);
   }
 
   grid.innerHTML = found.map(src => `
